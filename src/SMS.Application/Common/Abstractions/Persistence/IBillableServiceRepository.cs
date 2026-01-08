@@ -8,5 +8,7 @@ public interface IBillableServiceRepository
 {
     Task<BillableService?> GetByIdAsync(ServiceId id, CancellationToken ct = default);
     Task<CreateServiceDto> AddAsync(BillableService service, CancellationToken ct = default);
+    Task<UpdateServiceDto> UpdateAsync(BillableService service, CancellationToken ct = default);
+    Task<BillableService> GetByIdOrThrowAsync(ServiceId id, CancellationToken ct = default);
     Task<List<GetServicesDto>> GetServicesAsync();
 }

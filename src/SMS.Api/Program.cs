@@ -11,6 +11,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<CreateStudentCommand>();
 builder.Services.AddScoped<GetServicesQuery>();
 builder.Services.AddScoped<CreateServiceCommand>();
+builder.Services.AddScoped<UpdateServiceCommand>();
 
 
 var app = builder.Build();
