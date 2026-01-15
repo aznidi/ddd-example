@@ -6,6 +6,8 @@ using SMS.Application.Features.Pedagogy.Students.Commands.UpdateStudent;
 using SMS.Application.Features.Pedagogy.Students.Commands.DeleteStudent;
 using SMS.Application.Features.Pedagogy.Students.Queries.GetStudents;
 using SMS.Application.Features.Pedagogy.Students.Queries.GetStudentById;
+using SMS.Application.Features.Pedagogy.Students.Queries.GetStudentEngagements;
+using SMS.Application.Features.Finance.Engagements.Queries.GetEngagementServices;
 
 namespace SMS.Api.Controllers.Finance;
 
@@ -34,6 +36,25 @@ public sealed class StudentController : BaseApiController
         var student = await _mediator.Send(new GetStudentByIdQuery(id), ct);
         
         return ApiOk(student, "Student fetched successfully");
+    }
+
+    [HttpGet("{id:guid}/engagements")]
+    public async Task<IActionResult> GetStudentEngagements([FromRoute] Guid id, CancellationToken ct)
+    {
+        var engagements = await _mediator.Send(new GetStudentEngagementsQuery(id), ct);
+        
+        return ApiOk(engagements, "Student engagements fetched successfully");
+    }
+
+    [HttpGet("{studentId:guid}/engagements/{engagementId:guid}/services")]
+    public async Task<IActionResult> GetEngagementServices(
+        [FromRoute] Guid studentId, 
+        [FromRoute] Guid engagementId,
+        CancellationToken ct)
+    {
+        var services = await _mediator.Send(new GetEngagementServicesQuery(engagementId), ct);
+        
+        return ApiOk(services, "Engagement services fetched successfully");
     }
 
     [HttpPost]

@@ -1,3 +1,4 @@
+using SMS.Api.Middlewares;
 using SMS.Application;
 using SMS.Infrastructure;
 
@@ -15,12 +16,19 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add Exception Handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddControllers();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 
 var app = builder.Build();
+
+// Use Exception Handler
+app.UseExceptionHandler();
 
 // Use CORS
 app.UseCors("AllowFrontend");

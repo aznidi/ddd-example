@@ -47,4 +47,11 @@ public sealed class Money : ValueObject
         if( ! Currency.Equals( value.Currency ) ) throw new InvalidCurrencyException("Currency mismatch");
         return new Money ( Amount + value.Amount, Currency );
     }
+
+    public Money Subtract(Money value)
+    {
+        if (!Currency.Equals(value.Currency)) throw new InvalidCurrencyException("Currency mismatch");
+        return new Money(Amount - value.Amount, Currency);
+    }
 }
+

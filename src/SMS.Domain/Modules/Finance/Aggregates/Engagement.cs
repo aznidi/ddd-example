@@ -106,4 +106,27 @@ public sealed class Engagement : AggregateRoot<EngagementId>
         };
     }
 
+    public void RemoveService(ServiceId serviceId)
+    {
+        var line = _lines.FirstOrDefault(l => l.ServiceId.Equals(serviceId));
+        
+        if (line is null)
+            throw new ServiceNotFoundInEngagementException($"Service with ID {serviceId.Value} not found in this engagement.");
+
+        TotalAmount = TotalAmount.Subtract(line.GetLineTotal());
+        _lines.Remove(line);
+    }
+
+    public void ChangePaymentPlan(PaymentPlan newPlan, DateOnly newFirstDueDate)
+    {
+        if (_lines.Count == 0)
+            throw new FailedToGenerateTranches("Cannot change payment plan for an engagement with no services.");
+
+        if (TotalAmount.Amount <= 0)
+            throw new FailedToGenerateTranches("Cannot generate tranches for an engagement with zero or negative total amount.");
+
+        _tranches.Clear();
+        GenerateTranches(newPlan, newFirstDueDate);
+    }
+
 }
