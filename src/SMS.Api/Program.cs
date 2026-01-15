@@ -1,21 +1,29 @@
-using SMS.Application.Commands.BillableServices;
-using SMS.Application.Commands.Students;
-using SMS.Application.Queries.BillableServices;
+using SMS.Application;
 using SMS.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddScoped<CreateStudentCommand>();
-builder.Services.AddScoped<GetServicesQuery>();
-builder.Services.AddScoped<CreateServiceCommand>();
-builder.Services.AddScoped<UpdateServiceCommand>();
 
 
 var app = builder.Build();
 
+// Use CORS
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 

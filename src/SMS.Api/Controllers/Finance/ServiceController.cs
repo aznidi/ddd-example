@@ -1,36 +1,29 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SMS.Api.Contracts.Finance.Services;
-using SMS.Application.Commands.BillableServices;
-using SMS.Application.DTOs.BillableServices;
-using SMS.Application.Queries.BillableServices;
+using SMS.Application.Features.Finance.Services.Commands.CreateService;
+using SMS.Application.Features.Finance.Services.Commands.UpdateService;
+using SMS.Application.Features.Finance.Services.Queries.GetServices;
 
 namespace SMS.Api.Controllers.Finance;
 
 
 [ApiController]
-[Route( "api/services" )]
+[Route("api/services")]
 public sealed class ServiceController : BaseApiController
 {
+    private readonly IMediator _mediator;
 
-    private readonly GetServicesQuery _query;
-    private readonly CreateServiceCommand _createCommand;
-    private readonly UpdateServiceCommand _updateCommand;
-
-    public ServiceController(
-        GetServicesQuery getServicesQuery,
-        CreateServiceCommand createServiceCommand,
-        UpdateServiceCommand updateServiceCommand
-    )
+    public ServiceController(IMediator mediator)
     {
-        _query = getServicesQuery;
-        _createCommand = createServiceCommand;
-        _updateCommand = updateServiceCommand;
+        _mediator = mediator;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetServices()
     {
-        List<GetServicesDto> services = await _query.GetServicesAsync();
+        var services = await _mediator.Send(new GetServicesQuery());
+        
         return ApiOk(
             services,
             "Services fetched successfully"
@@ -42,13 +35,14 @@ public sealed class ServiceController : BaseApiController
         [FromBody] CreateServiceRequest req
     )
     {
-        CreateServiceDto response = await _createCommand.CreateService(
-            name: req.Name,
-            price: req.Price,
-            currency: req.Currency,
-            description: req.Description,
-            ct: CancellationToken.None
+        var command = new CreateServiceCommand(
+            Name: req.Name,
+            Price: req.Price,
+            Currency: req.Currency,
+            Description: req.Description
         );
+
+        var response = await _mediator.Send(command);
 
         return ApiOk(
             response,
@@ -62,15 +56,16 @@ public sealed class ServiceController : BaseApiController
         [FromBody] UpdateServiceRequest req
     )
     {
-
-        UpdateServiceDto response = await _updateCommand.UpdateService(
-            serviceId:  serviceId.ToString(),
-            name: req.Name,
-            price: req.Price,
-            currency: req.Currency,
-            description: req.Description,
-            ct: CancellationToken.None
+        var command = new UpdateServiceCommand(
+            ServiceId: serviceId,
+            Name: req.Name,
+            Price: req.Price,
+            Currency: req.Currency,
+            Description: req.Description
         );
+
+        var response = await _mediator.Send(command);
+        
         return ApiOk(
             response,
             "Service updated successfully"
