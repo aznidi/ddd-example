@@ -1,5 +1,3 @@
-# This workflow will build a .NET project + run Sonar analysis
-
 name: .NET
 
 on:
@@ -26,7 +24,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Setup Java (required by Sonar scanner)
+      - name: Setup Java (required by Sonar)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -35,18 +33,16 @@ jobs:
       - name: Install SonarScanner for .NET
         run: dotnet tool install --tool-path ./.tools dotnet-sonarscanner
 
-      - name: Sonar Begin
+      - name: Sonar Begin (SonarCloud)
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             ./.tools/dotnet-sonarscanner begin \
               /o:"aznidi-1" \
               /k:"aznidi_ddd-example" \
               /d:sonar.token="$SONAR_TOKEN" \
-              ${SONAR_HOST_URL:+/d:sonar.host.url="$SONAR_HOST_URL"} \
               /d:sonar.pullrequest.key="${{ github.event.pull_request.number }}" \
               /d:sonar.pullrequest.branch="${{ github.head_ref }}" \
               /d:sonar.pullrequest.base="${{ github.base_ref }}"
@@ -54,8 +50,7 @@ jobs:
             ./.tools/dotnet-sonarscanner begin \
               /o:"aznidi-1" \
               /k:"aznidi_ddd-example" \
-              /d:sonar.token="$SONAR_TOKEN" \
-              ${SONAR_HOST_URL:+/d:sonar.host.url="$SONAR_HOST_URL"}
+              /d:sonar.token="$SONAR_TOKEN"
           fi
 
       - name: Restore dependencies
