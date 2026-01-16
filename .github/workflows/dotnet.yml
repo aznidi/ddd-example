@@ -1,5 +1,4 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# This workflow will build a .NET project + run Sonar analysis
 
 name: .NET
 
@@ -9,20 +8,67 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Java (required by Sonar scanner)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --tool-path ./.tools dotnet-sonarscanner
+
+      - name: Sonar Begin
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            ./.tools/dotnet-sonarscanner begin \
+              /o:"aznidi-1" \
+              /k:"aznidi_ddd-example" \
+              /d:sonar.token="$SONAR_TOKEN" \
+              ${SONAR_HOST_URL:+/d:sonar.host.url="$SONAR_HOST_URL"} \
+              /d:sonar.pullrequest.key="${{ github.event.pull_request.number }}" \
+              /d:sonar.pullrequest.branch="${{ github.head_ref }}" \
+              /d:sonar.pullrequest.base="${{ github.base_ref }}"
+          else
+            ./.tools/dotnet-sonarscanner begin \
+              /o:"aznidi-1" \
+              /k:"aznidi_ddd-example" \
+              /d:sonar.token="$SONAR_TOKEN" \
+              ${SONAR_HOST_URL:+/d:sonar.host.url="$SONAR_HOST_URL"}
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore SMS.sln
+
+      - name: Build
+        run: dotnet build SMS.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test SMS.sln --no-build --verbosity normal -c Release
+
+      - name: Sonar End
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./.tools/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
